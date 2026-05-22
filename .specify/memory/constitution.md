@@ -1,50 +1,106 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+==================
+Version change: (none) → 1.0.0 (initial ratification)
+Modified principles: N/A — initial setup
+Added sections: Core Principles (4), Technology Stack, Development Conventions, Governance
+Removed sections: N/A
+Templates requiring updates:
+  ✅ plan-template.md — Constitution Check gates already reflect principle-driven checks; Testing field should reflect "No tests"
+  ✅ spec-template.md — User Scenarios section already marked optional for tests; no changes needed
+  ✅ tasks-template.md — Tests note already states optional; no changes needed
+Follow-up TODOs: None — all placeholders resolved
+-->
+
+# Habit Tracker Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Clean Code
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Every source file MUST be readable and maintainable at a glance.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- Functions and components MUST do one thing only; extract when a unit exceeds a single
+  clear responsibility.
+- Naming MUST be unambiguous: prefer explicit descriptive names over abbreviations.
+- Dead code, console.log statements, and commented-out blocks MUST NOT be committed.
+- Files MUST stay under ~200 lines; split larger files into focused modules.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Simple UX
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+The user interface MUST be intuitive without tooltips, onboarding flows, or documentation.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+- Every interactive element MUST communicate its purpose through label, icon, or
+  placement alone.
+- Flows MUST require the fewest possible steps to complete a core action.
+- Visual feedback (loading, error, success states) MUST be present for every async
+  operation.
+- No feature is added unless it removes friction or delivers clear user value.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Mobile-First Responsive Design
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+All UI MUST be designed and verified at mobile viewport (≥320 px) before desktop.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Layouts MUST use Tailwind CSS responsive prefixes (`sm:`, `md:`, `lg:`) and MUST
+  work correctly at every breakpoint.
+- Touch targets MUST be at minimum 44×44 px.
+- No horizontal scroll is permitted at any supported viewport width.
+- Desktop enhancements are additive; they MUST NOT break the mobile baseline.
+
+### IV. Minimal Dependencies
+
+The production dependency tree MUST remain as small as possible.
+
+- A new dependency MUST NOT be added if the required functionality can be implemented
+  in under ~30 lines of idiomatic TypeScript.
+- Every dependency introduction requires explicit justification in the PR description.
+- Approved production dependencies: `react ^19.2.6`, `react-dom ^19.2.6`,
+  `react-router-dom` (v6), `tailwindcss` (dev/build).
+- No UI component libraries (e.g., MUI, Ant Design, Chakra) are permitted.
+
+## Technology Stack
+
+| Concern      | Choice                             | Version (package.json) |
+| ------------ | ---------------------------------- | ---------------------- |
+| UI framework | React (functional components only) | ^19.2.6                |
+| Language     | TypeScript (strict mode)           | ~6.0.2                 |
+| Build tool   | Vite                               | ^8.0.12                |
+| Styling      | Tailwind CSS                       | per install            |
+| Routing      | React Router                       | v6                     |
+| State        | Custom store in `/src/store`       | —                      |
+| API layer    | `/src/api` modules                 | —                      |
+
+No UI libraries are permitted. All visual components MUST be built with Tailwind
+utility classes and plain HTML elements.
+
+## Development Conventions
+
+- **No tests of any kind** — unit, integration, and e2e tests are explicitly excluded
+  from this project. This rule supersedes any other guidance or template instruction.
+- One component per file; file name MUST match the exported component name (PascalCase).
+- Functional components only — class components are forbidden.
+- TypeScript strict mode MUST be enabled (`"strict": true` in tsconfig).
+- Folder structure:
+  - `/src/components` — reusable UI components
+  - `/src/pages` — route-level page components
+  - `/src/store` — application state and reducers
+  - `/src/api` — data-fetching and persistence modules
+  - `/src/types` — shared TypeScript type and interface definitions
+  - `/src/utils` — pure utility functions
+- No file may import from a sibling folder it does not own; cross-cutting imports flow
+  through `types` or `utils`.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other project guidance where conflicts exist.
+Amendments MUST be documented with a version bump, rationale, and updated
+`LAST_AMENDED_DATE` before merging.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- MAJOR bump: removal or redefinition of a principle, or a stack change.
+- MINOR bump: new principle or section added.
+- PATCH bump: clarifications, typo fixes, or non-semantic wording refinements.
+
+All PRs MUST be reviewed against these principles before merge. Any deviation requires
+an explicit exception note in the PR and a PATCH or higher constitution amendment.
+
+**Version**: 1.0.0 | **Ratified**: 2026-05-21 | **Last Amended**: 2026-05-21
