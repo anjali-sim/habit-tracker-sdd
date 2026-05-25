@@ -5,8 +5,10 @@ interface EmptyStateProps {
 function EmptyState({ onAddHabit }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-      <h2 className="text-2xl font-bold text-zinc-100">No habits yet</h2>
-      <p className="text-zinc-400 max-w-xs">
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
+        No habits yet
+      </h2>
+      <p className="text-gray-500 dark:text-zinc-400 max-w-xs">
         Start building your routine by adding your first habit.
       </p>
       <button

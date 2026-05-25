@@ -88,7 +88,7 @@ function HabitCard({
 
   return (
     <div
-      className={`rounded-xl bg-zinc-900 p-4 flex flex-col gap-3 transition-opacity ${isDragging ? "opacity-40" : completedToday ? "opacity-55" : "opacity-100"}`}
+      className={`rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-transparent p-4 flex flex-col gap-3 transition-opacity ${isDragging ? "opacity-40" : completedToday ? "opacity-55" : "opacity-100"}`}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
@@ -98,7 +98,7 @@ function HabitCard({
         <div className="flex items-center gap-2 min-w-0">
           <Link
             to={`/habit/${habit.id}`}
-            className="text-lg font-semibold text-zinc-100 hover:text-violet-400 transition-colors leading-tight"
+            className="text-lg font-semibold text-gray-900 dark:text-zinc-100 hover:text-violet-600 dark:hover:text-violet-400 transition-colors leading-tight"
           >
             {habit.name}
           </Link>
@@ -116,7 +116,7 @@ function HabitCard({
           <button
             type="button"
             onClick={() => onEdit(habit.id)}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
             aria-label={`Edit ${habit.name}`}
           >
             ✏️
@@ -124,7 +124,7 @@ function HabitCard({
           <button
             type="button"
             onClick={() => onDelete(habit.id)}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-red-400 hover:bg-zinc-800 transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
             aria-label={`Delete ${habit.name}`}
           >
             🗑️
@@ -133,7 +133,9 @@ function HabitCard({
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-sm text-zinc-400">{habit.category}</span>
+        <span className="text-sm text-gray-500 dark:text-zinc-400">
+          {habit.category}
+        </span>
         <span
           className={`h-3 w-3 rounded-full ${COLOR_CLASSES[habit.colorTag] ?? "bg-blue-500"}`}
           aria-hidden="true"
@@ -148,13 +150,13 @@ function HabitCard({
       <div className="flex items-center justify-end">
         {habit.frequency === "hourly" && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-zinc-300 tabular-nums">
+            <span className="text-sm text-gray-600 dark:text-zinc-300 tabular-nums">
               {hourlyCount}/{hourlyTarget} times
             </span>
             <button
               type="button"
               onClick={handleAddHourly}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors text-lg"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors text-lg"
               aria-label="Log one completion"
             >
               +
@@ -163,7 +165,7 @@ function HabitCard({
               <button
                 type="button"
                 onClick={handleRemoveHourly}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors text-lg"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors text-lg"
                 aria-label="Remove last completion"
               >
                 −
@@ -175,13 +177,13 @@ function HabitCard({
         {habit.frequency === "monthly" && (
           <div className="flex flex-col gap-1 w-full">
             <div className="flex items-center justify-end gap-2">
-              <span className="text-sm text-zinc-300 tabular-nums">
+              <span className="text-sm text-gray-600 dark:text-zinc-300 tabular-nums">
                 {monthlyCount}/{monthDays} times
               </span>
               <button
                 type="button"
                 onClick={handleAddMonthly}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors text-lg"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors text-lg"
                 aria-label="Log one completion"
               >
                 +
@@ -190,7 +192,7 @@ function HabitCard({
                 <button
                   type="button"
                   onClick={handleRemoveMonthly}
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors text-lg"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors text-lg"
                   aria-label="Remove last completion"
                 >
                   −

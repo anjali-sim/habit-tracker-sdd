@@ -33,7 +33,7 @@ function HabitDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 p-4">
         <Link
           to="/"
           className="inline-flex items-center gap-1 text-zinc-400 hover:text-zinc-100 mb-6 sticky top-4"
@@ -50,12 +50,12 @@ function HabitDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 p-4 flex flex-col items-center justify-center gap-4">
         <p className="text-red-400">{error}</p>
         <button
           type="button"
           onClick={loadHabits}
-          className="rounded-lg bg-zinc-800 px-4 py-2 min-h-[44px] text-sm text-zinc-100 hover:bg-zinc-700 transition-colors"
+          className="rounded-lg bg-gray-200 dark:bg-zinc-800 px-4 py-2 min-h-[44px] text-sm text-gray-900 dark:text-zinc-100 hover:bg-gray-300 dark:hover:bg-zinc-700 transition-colors"
         >
           Retry
         </button>
@@ -68,8 +68,10 @@ function HabitDetailPage() {
 
   if (!habit) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 flex flex-col items-center justify-center gap-4">
-        <p className="text-zinc-400 text-lg">Habit not found.</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 p-4 flex flex-col items-center justify-center gap-4">
+        <p className="text-gray-500 dark:text-zinc-400 text-lg">
+          Habit not found.
+        </p>
         <Link
           to="/"
           className="rounded-lg bg-violet-600 px-4 py-2 min-h-[44px] text-sm font-semibold text-white hover:bg-violet-500 transition-colors"
@@ -89,28 +91,28 @@ function HabitDetailPage() {
   const completedCount = cells.filter((c) => c.state === "completed").length;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="sticky top-0 z-10 bg-zinc-950 border-b border-zinc-800 px-4 py-3">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100">
+      <div className="sticky top-0 z-10 bg-gray-50 dark:bg-zinc-950 border-b border-gray-200 dark:border-zinc-800 px-4 py-3">
         <Link
           to="/"
-          className="inline-flex items-center gap-1 text-zinc-400 hover:text-zinc-100 transition-colors text-sm"
+          className="inline-flex items-center gap-1 text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors text-sm"
         >
           ← Back
         </Link>
       </div>
 
-      <main className="p-4 max-w-2xl mx-auto flex flex-col gap-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-zinc-100 leading-tight">
+      <main className="p-4 max-w-xl mx-auto flex flex-col gap-6">
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 min-w-0 truncate">
             {habit.name}
           </h1>
           <span
-            className={`h-4 w-4 rounded-full ${COLOR_CLASSES[habit.colorTag] ?? "bg-blue-500"}`}
+            className={`h-3 w-3 rounded-full shrink-0 inline-block mb-0.5 ${COLOR_CLASSES[habit.colorTag] ?? "bg-blue-500"}`}
             aria-hidden="true"
           />
         </div>
 
-        <p className="text-zinc-400 text-sm -mt-4">
+        <p className="text-gray-500 dark:text-zinc-400 text-sm -mt-4">
           {habit.category} · {habit.frequency}
         </p>
 
@@ -119,8 +121,8 @@ function HabitDetailPage() {
           <StreakBadge type="longest" count={streakData.longest} />
         </div>
 
-        <div className="rounded-xl bg-zinc-900 p-4">
-          <h2 className="text-sm font-medium text-zinc-400 mb-3">
+        <div className="rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-transparent p-4">
+          <h2 className="text-sm font-medium text-gray-500 dark:text-zinc-400 mb-3">
             Last 365 days
           </h2>
           <Heatmap

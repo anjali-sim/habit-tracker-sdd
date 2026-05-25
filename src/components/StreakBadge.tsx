@@ -12,7 +12,7 @@ function StreakBadge({ type, count }: StreakBadgeProps) {
 
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-3 py-1 text-sm text-zinc-200"
+      className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-zinc-800 px-3 py-1 text-sm text-gray-700 dark:text-zinc-200"
       aria-label={ariaLabel}
     >
       <span aria-hidden="true">{type === "current" ? "🔥" : "🏆"}</span>
