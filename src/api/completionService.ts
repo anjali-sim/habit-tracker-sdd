@@ -50,3 +50,31 @@ export function deleteForHabit(habitId: string): void {
   const { [habitId]: _, ...rest } = record;
   write(rest);
 }
+
+export function countForDay(habitId: string, date: string): number {
+  return (read()[habitId] ?? []).filter((e) => e.slice(0, 10) === date).length;
+}
+
+export function countForMonth(
+  habitId: string,
+  year: number,
+  month: number,
+): number {
+  const prefix = `${year}-${String(month).padStart(2, "0")}`;
+  return (read()[habitId] ?? []).filter((e) => e.slice(0, 7) === prefix).length;
+}
+
+export function addCompletion(habitId: string, entry: string): void {
+  const record = read();
+  const entries = record[habitId] ?? [];
+  write({ ...record, [habitId]: [...entries, entry] });
+}
+
+export function removeLastCompletion(habitId: string, date: string): void {
+  const record = read();
+  const entries = record[habitId] ?? [];
+  const idx = entries.map((e) => e.slice(0, 10)).lastIndexOf(date);
+  if (idx === -1) return;
+  const next = [...entries.slice(0, idx), ...entries.slice(idx + 1)];
+  write({ ...record, [habitId]: next });
+}

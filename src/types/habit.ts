@@ -12,7 +12,7 @@ export type ColorTag =
   | "green"
   | "blue"
   | "purple";
-export type Frequency = "daily" | "weekly";
+export type Frequency = "daily" | "weekly" | "hourly" | "monthly";
 
 export interface Habit {
   id: string;
@@ -21,6 +21,8 @@ export interface Habit {
   colorTag: ColorTag;
   frequency: Frequency;
   createdAt: string;
+  hourlyTarget?: number;
+  reminderTime?: string;
 }
 
 export type CreateHabitInput = Omit<Habit, "id" | "createdAt">;

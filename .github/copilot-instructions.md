@@ -2,6 +2,6 @@
 
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/006-drag-drop-reorder/plan.md
+at specs/008-habit-reminders/plan.md
 
 <!-- SPECKIT END -->
