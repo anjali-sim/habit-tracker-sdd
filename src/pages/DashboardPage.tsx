@@ -8,6 +8,7 @@ import HabitModal from "../components/HabitModal";
 import ConfirmModal from "../components/ConfirmModal";
 import Toast from "../components/Toast";
 import { useDragDrop } from "../utils/useDragDrop";
+import { useReminderScheduler } from "../utils/reminder";
 import type { ModalState, Toast as ToastType } from "../types";
 
 function DashboardPage() {
@@ -67,6 +68,8 @@ function DashboardPage() {
   const orderedHabits = order
     .map((id) => habits.find((h) => h.id === id))
     .filter((h): h is NonNullable<typeof h> => h !== undefined);
+
+  useReminderScheduler(orderedHabits);
 
   function handleModalSubmit(input: Parameters<typeof addHabit>[0]) {
     if (modal.type === "add") addHabit(input);
@@ -206,6 +209,8 @@ function DashboardPage() {
                   category: editHabit.category,
                   colorTag: editHabit.colorTag,
                   frequency: editHabit.frequency,
+                  hourlyTarget: editHabit.hourlyTarget,
+                  reminderTime: editHabit.reminderTime,
                 }
               : undefined
           }

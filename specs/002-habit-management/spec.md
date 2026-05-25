@@ -4,9 +4,11 @@
 
 **Created**: 2026-05-22
 
-**Status**: Draft
+**Status**: Updated
 
 **Input**: User description: "habit management - clicking 'Add Habit' opens a modal form with fields: habit name, category (Health, Work, Personal, Fitness), color tag picker (6 color options), and frequency (daily/weekly). Editing opens same modal pre-filled. Deleting shows a confirmation prompt before removing."
+
+**Updated**: 2026-05-25 — Frequency options expanded to four: Daily, Weekly, Hourly, Monthly. Hourly habits carry a per-hour target count and display today's completion count on the dashboard card instead of a checkbox. Monthly habits display the current-month completion count with a progress bar on the dashboard card.
 
 ## Clarifications
 
@@ -17,6 +19,12 @@
 - Q: What form should the delete confirmation take? → A: Modal dialog — a dedicated modal overlay showing the habit name with explicit Confirm and Cancel buttons.
 - Q: Can a user create two habits with the same name? → A: Names must be unique — case-insensitive uniqueness enforced; an error is shown if a duplicate name is detected on submission.
 - Q: Should the habit modal be keyboard-navigable and screen-reader compatible? → A: Full modal accessibility — focus trap while open, Escape to dismiss, ARIA role and label, all controls keyboard-operable.
+
+### Session 2026-05-25
+
+- Q: For hourly habits, should the dashboard show completions against the full 24-hour daily target or against a rolling window of hours elapsed? → A: Full day target — the denominator is always (target count per hour × 24), giving users a view of their full-day goal regardless of the current hour.
+- Q: For monthly habits, should the denominator of the progress bar be fixed (e.g., 30) or the actual number of days in the current calendar month? → A: Actual days in current month — the denominator reflects the real calendar month length (28, 29, 30, or 31 days) so the fraction is accurate.
+- Q: When frequency is changed on an existing habit (e.g., Daily → Hourly), what happens to existing completion history? → A: History is preserved, frequency update is forward-looking — historical records are kept as-is; the per-hour target field defaults to 1 for habits switching to Hourly.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -75,6 +83,43 @@ A user decides they no longer want to track a habit and chooses to delete it. Be
 
 ---
 
+### User Story 4 - Configure an Hourly Habit (Priority: P2)
+
+A user wants to track a habit multiple times per hour — for example, drinking water. When creating or editing this habit, they select 'Hourly' frequency and specify how many times per hour they intend to complete it. On the dashboard, the card for this habit shows a running tally of today's completions against the full daily target rather than a single checkbox.
+
+**Why this priority**: Hourly tracking is qualitatively different from daily or weekly — it changes both the data model (target per hour) and the dashboard card UI. Getting this right ensures the app accommodates high-frequency habits without confusion.
+
+**Independent Test**: Create a habit with Hourly frequency and a target count of 2 per hour. Verify the dashboard card displays a completion count (e.g., "0/48 times") instead of a checkbox. Log several completions and confirm the numerator increments correctly.
+
+**Acceptance Scenarios**:
+
+1. **Given** the habit modal is open and the user selects 'Hourly' frequency, **When** they view the form, **Then** an additional 'target count per hour' field appears with a default value of 1.
+2. **Given** the target count per hour field is visible, **When** the user enters a value less than 1 or a non-integer and submits, **Then** a validation error is shown on that field and the form is not submitted.
+3. **Given** the target count per hour field is visible, **When** the user leaves the field at its default (1) and submits, **Then** the habit is saved with a per-hour target of 1.
+4. **Given** an hourly habit exists on the dashboard, **When** the user views its card, **Then** the card shows today's completion count as a fraction against the full-day target (e.g., "3/24 times" for target=1/hr), not a simple checkbox.
+5. **Given** an hourly habit card is displayed, **When** the user logs a completion, **Then** the numerator of the count increments by one.
+6. **Given** the edit modal is open for an hourly habit, **When** the modal opens, **Then** the target count per hour field is pre-filled with the habit's current per-hour target.
+
+---
+
+### User Story 5 - Track a Monthly Habit (Priority: P3)
+
+A user wants to track a habit they intend to do multiple times over the course of a month — for example, reading books or attending a gym class. They create a habit with 'Monthly' frequency. On the dashboard, the card shows how many times they have completed the habit in the current calendar month alongside a small progress bar showing their proportion of the month's days.
+
+**Why this priority**: Monthly habits round out the frequency model and serve users with longer-cycle goals. The progress bar adds glanceable context that a raw count alone does not provide.
+
+**Independent Test**: Create a habit with Monthly frequency. Verify the dashboard card shows a monthly count (e.g., "0/31 times" in January) with a progress bar. Log completions and confirm the count and bar update accordingly.
+
+**Acceptance Scenarios**:
+
+1. **Given** a monthly habit exists on the dashboard, **When** the user views its card, **Then** the card shows the number of completions in the current calendar month as a fraction against the total days in that month (e.g., "12/31 times"), not a simple checkbox.
+2. **Given** a monthly habit card is displayed, **When** the user logs a completion, **Then** the completion count increments by one and the progress bar updates to reflect the new fraction.
+3. **Given** a monthly habit card is displayed at the start of a new calendar month, **When** the user views the card, **Then** the count resets to 0 and the denominator updates to reflect the number of days in the new month.
+4. **Given** the habit modal is open and 'Monthly' frequency is selected, **When** the user submits the form (no extra fields needed for monthly), **Then** the habit is saved as monthly with no per-hour target.
+5. **Given** a monthly habit exists, **When** the user views the dashboard in February of a leap year, **Then** the denominator shows 29.
+
+---
+
 ### Edge Cases
 
 - What if the user submits the habit form with only whitespace in the name field? Whitespace-only names should fail validation, same as a blank name.
@@ -83,6 +128,10 @@ A user decides they no longer want to track a habit and chooses to delete it. Be
 - What if all 6 colour options are already in use by existing habits? The colour picker still shows all 6 options; colours are not unique per habit and may be reused.
 - What happens to a habit's streak and history when it is edited (e.g., frequency changed from daily to weekly)? Historical completion data is preserved; streak recalculation is handled by the data layer.
 - What if the modal is opened and the device loses connectivity before submission? The user receives an error message and the form data is preserved so they can retry.
+- What if the user changes an existing hourly habit's target count per hour? Only future completions are affected; today's accumulated count remains unchanged, though the denominator updates immediately to reflect the new target.
+- What if an hourly habit's target count is set to a very large number (e.g., 100 per hour, giving a daily target of 2400)? The card still displays the fraction correctly; no upper limit is enforced beyond form validation requiring a positive integer.
+- What if no completions have been logged for a monthly habit at the start of a new month? The card shows "0/[days in month]" and the progress bar is at zero, which is the correct initial state.
+- What if the user switches an existing daily or weekly habit to hourly? The per-hour target defaults to 1; historical completion records are preserved and the new display format applies from the point of update.
 
 ## Requirements _(mandatory)_
 
@@ -94,7 +143,7 @@ A user decides they no longer want to track a habit and chooses to delete it. Be
 - **FR-004**: The habit name field MUST enforce a maximum length of 100 characters.
 - **FR-005**: The habit modal form MUST include a category selector with exactly four options: Health, Work, Personal, and Fitness. When opening for a new habit, the selector MUST default to 'Health'. The category field is required — the form MUST NOT submit without a category selected.
 - **FR-006**: The habit modal form MUST include a colour tag picker presenting exactly six colour options. When opening for a new habit, the first colour option MUST be pre-selected. The colour field is required — the form MUST NOT submit without a colour selected.
-- **FR-007**: The habit modal form MUST include a frequency selector with exactly two options: Daily and Weekly. When opening for a new habit, the selector MUST default to 'Daily'. The frequency field is required — the form MUST NOT submit without a frequency selected.
+- **FR-007**: The habit modal form MUST include a frequency selector with exactly four options: Daily, Weekly, Hourly, and Monthly. When opening for a new habit, the selector MUST default to 'Daily'. The frequency field is required — the form MUST NOT submit without a frequency selected.
 - **FR-008**: The habit modal form MUST provide a way to submit (save) and a way to cancel/dismiss without saving.
 - **FR-009**: On successful submission of a new habit, the modal MUST close and the new habit MUST appear on the dashboard immediately without a full page reload.
 - **FR-010**: Each habit card on the dashboard MUST provide an edit action that opens the habit modal pre-filled with that habit's current name, category, colour tag, and frequency.
@@ -107,11 +156,17 @@ A user decides they no longer want to track a habit and chooses to delete it. Be
 - **FR-017**: If saving a new or edited habit fails, the modal MUST remain open, all user-entered values MUST be preserved, and an inline error message MUST be displayed informing the user that the save failed and prompting them to retry.
 - **FR-018**: Habit names MUST be unique across all of the user's habits, compared case-insensitively. On submission, the form MUST check for a name conflict and display a validation error on the name field if a duplicate is found. When editing an existing habit, the uniqueness check MUST exclude that habit's own current name so an unchanged name does not trigger a false conflict.
 - **FR-019**: The habit modal (both the form modal and the delete confirmation modal) MUST be fully keyboard-accessible: keyboard focus MUST move into the modal when it opens, focus MUST be trapped within the modal while it is open, the Escape key MUST dismiss the modal (equivalent to Cancel), and all interactive controls MUST be operable via keyboard. The modal MUST have an appropriate ARIA role and accessible label so screen readers announce its purpose when it opens.
+- **FR-020**: When the 'Hourly' frequency option is selected in the habit modal, an additional 'target count per hour' input field MUST appear. This field MUST accept only positive integers (minimum value 1). Its default value MUST be 1. The form MUST NOT submit if this field contains a value less than 1 or a non-integer when Hourly frequency is selected. This field MUST be hidden when any other frequency is selected.
+- **FR-021**: When the edit modal is opened for an existing Hourly habit, the 'target count per hour' field MUST be pre-filled with the habit's current per-hour target value.
+- **FR-022**: On the dashboard, a habit card with 'Hourly' frequency MUST display today's completion count as a numeric fraction against today's full-day target (calculated as target count per hour × 24) in the format "[completed]/[total] times". This replaces the simple completion checkbox shown for Daily and Weekly habits. The count MUST reset to 0 at the start of each calendar day.
+- **FR-023**: On the dashboard, a habit card with 'Monthly' frequency MUST display the current calendar month's completion count as a numeric fraction against the number of days in the current calendar month, in the format "[completed]/[days in month] times". A minimal progress bar MUST also be displayed on the card showing the ratio of completions to days-in-month as a proportional fill. This replaces the simple completion checkbox. The count MUST reset to 0 at the start of each new calendar month and the denominator MUST update to reflect the day count of the new month.
 
 ### Key Entities
 
-- **Habit**: The core data object a user creates and manages. User-facing attributes: name (text, required, max 100 chars, must be unique case-insensitively across all habits), category (one of: Health, Work, Personal, Fitness), colour tag (one of 6 options), frequency (Daily or Weekly).
-- **Habit Modal**: The shared form UI used for both creating and editing habits. Behaviour differs by context: empty for creation, pre-filled for editing.
+- **Habit**: The core data object a user creates and manages. User-facing attributes: name (text, required, max 100 chars, must be unique case-insensitively across all habits), category (one of: Health, Work, Personal, Fitness), colour tag (one of 6 options), frequency (one of: Daily, Weekly, Hourly, Monthly). For Hourly habits, an additional attribute is required: target count per hour (positive integer, default 1). Weekly, Daily, and Monthly habits do not carry a per-hour target.
+- **Habit Modal**: The shared form UI used for both creating and editing habits. Behaviour differs by context: empty for creation, pre-filled for editing. When 'Hourly' frequency is selected, the modal conditionally reveals the 'target count per hour' field.
+- **Dashboard Habit Card (Hourly)**: A variant of the dashboard habit card rendered when a habit's frequency is Hourly. Shows today's completion count as "[completed]/[total] times" where total = target count per hour × 24. Incrementable by the user. Resets daily.
+- **Dashboard Habit Card (Monthly)**: A variant of the dashboard habit card rendered when a habit's frequency is Monthly. Shows the current-month completion count as "[completed]/[days in month] times" alongside a minimal proportional progress bar. Incrementable by the user. Resets at the start of each calendar month.
 - **Confirmation Modal**: A dedicated modal overlay shown before any deletion is processed. Displays the name of the habit to be deleted and provides explicit Confirm and Cancel controls. Requires active user confirmation before the deletion proceeds.
 
 ## Success Criteria _(mandatory)_
@@ -125,13 +180,19 @@ A user decides they no longer want to track a habit and chooses to delete it. Be
 - **SC-005**: The modal opens and is fully interactive within 500 milliseconds of the triggering action.
 - **SC-006**: 95% of usability test participants can successfully add, edit, and delete a habit without guidance.
 - **SC-007**: No duplicate habits are created from double-tap or rapid repeated submissions.
+- **SC-008**: Users with Hourly habits can see at a glance how many completions they have logged today vs. their full-day target without navigating away from the dashboard.
+- **SC-009**: Users with Monthly habits can see at a glance their current-month progress relative to the month length without navigating to a detail view.
 
 ## Assumptions
 
 - The "Add Habit" trigger control exists on the dashboard page (established in the Dashboard Page spec); this spec defines the modal and management behaviour, not the placement of the trigger.
 - The four category options (Health, Work, Personal, Fitness) are fixed for this version; dynamic or user-defined categories are out of scope.
 - The six colour options in the colour picker are predefined by the design; the specific colour values are a design-time decision, not a requirement of this spec.
-- Frequency selection (Daily / Weekly) determines how the app tracks completion and streaks; the exact calculation logic is handled by the data layer and is out of scope for this spec.
+- Frequency selection (Daily, Weekly, Hourly, or Monthly) determines how the app tracks completion and how the dashboard card presents progress; the exact data storage and retrieval logic is handled by the data layer and is out of scope for this spec.
 - Habit creation and editing do not require a separate confirmation step — only deletion does.
 - Existing completion history and streak data are preserved when a habit is edited; this spec does not require streak recalculation on frequency change.
+- When a habit's frequency is changed from or to Hourly, the per-hour target field defaults to 1 for new or transitioning Hourly habits; historical records under the old frequency are not deleted.
+- The progress bar on Monthly habit cards is decorative and proportional; its exact visual design (height, colour, border radius) is a design-time decision outside this spec.
+- The 'target count per hour' field is exclusive to Hourly habits; Daily, Weekly, and Monthly habits do not store or display a per-hour target.
+- The incrementation mechanism for Hourly and Monthly completion counts (i.e., how users log a completion from the dashboard card) follows the same interaction pattern used by Daily and Weekly completion checkboxes; the specific control design is a UI design decision.
 - Bulk creation, import, or templated habits are out of scope for this feature.

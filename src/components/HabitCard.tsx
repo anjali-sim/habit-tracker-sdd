@@ -1,10 +1,18 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { Habit, StreakData } from "../types";
 import StreakBadge from "./StreakBadge";
 import CompletionCheckbox from "./CompletionCheckbox";
 import { useCompletionStore } from "../store/completionStore";
-import { todayISO } from "../utils/date";
+import { todayISO, daysInMonth } from "../utils/date";
 import { currentStreak, longestStreak } from "../utils/streak";
+import {
+  countForDay,
+  countForMonth,
+  addCompletion,
+  removeLastCompletion,
+} from "../api/completionService";
+import { getPermissionStatus } from "../api/reminderService";
 
 const COLOR_CLASSES: Record<string, string> = {
   red: "bg-red-500",
@@ -35,6 +43,7 @@ function HabitCard({
   onDragEnd,
 }: HabitCardProps) {
   const today = todayISO();
+  const now = new Date();
   const { completions, toggleComplete } = useCompletionStore();
   const dates = new Set<string>(completions[habit.id] ?? []);
   const completedToday = dates.has(today);
@@ -42,6 +51,40 @@ function HabitCard({
     current: currentStreak(dates, today),
     longest: longestStreak(dates, habit.createdAt, today),
   };
+
+  const [hourlyCount, setHourlyCount] = useState(() =>
+    habit.frequency === "hourly" ? countForDay(habit.id, today) : 0,
+  );
+  const [monthlyCount, setMonthlyCount] = useState(() =>
+    habit.frequency === "monthly"
+      ? countForMonth(habit.id, now.getFullYear(), now.getMonth() + 1)
+      : 0,
+  );
+
+  const monthDays = daysInMonth(now.getFullYear(), now.getMonth() + 1);
+  const hourlyTarget = (habit.hourlyTarget ?? 1) * 24;
+  const notificationsBlocked =
+    !!habit.reminderTime && getPermissionStatus() === "denied";
+
+  function handleAddHourly() {
+    addCompletion(habit.id, new Date().toISOString().slice(0, 16));
+    setHourlyCount((c) => c + 1);
+  }
+
+  function handleRemoveHourly() {
+    removeLastCompletion(habit.id, today);
+    setHourlyCount((c) => Math.max(0, c - 1));
+  }
+
+  function handleAddMonthly() {
+    addCompletion(habit.id, today);
+    setMonthlyCount((c) => c + 1);
+  }
+
+  function handleRemoveMonthly() {
+    removeLastCompletion(habit.id, today);
+    setMonthlyCount((c) => Math.max(0, c - 1));
+  }
 
   return (
     <div
@@ -52,12 +95,23 @@ function HabitCard({
       aria-label={`${habit.name} habit card`}
     >
       <div className="flex items-start justify-between gap-2">
-        <Link
-          to={`/habit/${habit.id}`}
-          className="text-lg font-semibold text-zinc-100 hover:text-violet-400 transition-colors leading-tight"
-        >
-          {habit.name}
-        </Link>
+        <div className="flex items-center gap-2 min-w-0">
+          <Link
+            to={`/habit/${habit.id}`}
+            className="text-lg font-semibold text-zinc-100 hover:text-violet-400 transition-colors leading-tight"
+          >
+            {habit.name}
+          </Link>
+          {notificationsBlocked && (
+            <span
+              className="text-amber-400 text-xs shrink-0"
+              title="Notifications blocked — reminder will not fire"
+              aria-label="Notifications blocked"
+            >
+              🔕
+            </span>
+          )}
+        </div>
         <div className="flex gap-1 shrink-0">
           <button
             type="button"
@@ -92,13 +146,77 @@ function HabitCard({
       </div>
 
       <div className="flex items-center justify-end">
-        <CompletionCheckbox
-          habitId={habit.id}
-          habitName={habit.name}
-          date={today}
-          checked={completedToday}
-          onChange={() => toggleComplete(habit.id, today)}
-        />
+        {habit.frequency === "hourly" && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-zinc-300 tabular-nums">
+              {hourlyCount}/{hourlyTarget} times
+            </span>
+            <button
+              type="button"
+              onClick={handleAddHourly}
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors text-lg"
+              aria-label="Log one completion"
+            >
+              +
+            </button>
+            {hourlyCount > 0 && (
+              <button
+                type="button"
+                onClick={handleRemoveHourly}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors text-lg"
+                aria-label="Remove last completion"
+              >
+                −
+              </button>
+            )}
+          </div>
+        )}
+
+        {habit.frequency === "monthly" && (
+          <div className="flex flex-col gap-1 w-full">
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-sm text-zinc-300 tabular-nums">
+                {monthlyCount}/{monthDays} times
+              </span>
+              <button
+                type="button"
+                onClick={handleAddMonthly}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors text-lg"
+                aria-label="Log one completion"
+              >
+                +
+              </button>
+              {monthlyCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleRemoveMonthly}
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors text-lg"
+                  aria-label="Remove last completion"
+                >
+                  −
+                </button>
+              )}
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+              <div
+                className="h-1.5 rounded-full bg-indigo-500 transition-all"
+                style={{
+                  width: `${Math.min((monthlyCount / monthDays) * 100, 100)}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {(habit.frequency === "daily" || habit.frequency === "weekly") && (
+          <CompletionCheckbox
+            habitId={habit.id}
+            habitName={habit.name}
+            date={today}
+            checked={completedToday}
+            onChange={() => toggleComplete(habit.id, today)}
+          />
+        )}
       </div>
     </div>
   );

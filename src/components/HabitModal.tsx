@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { CreateHabitInput, Category, ColorTag, Frequency } from "../types";
+import { requestPermission, getPermissionStatus } from "../api/reminderService";
 
 const CATEGORIES: Category[] = [
   "Health",
@@ -9,7 +10,6 @@ const CATEGORIES: Category[] = [
   "Work",
   "Personal",
 ];
-const FREQUENCIES: Frequency[] = ["daily", "weekly"];
 const COLOR_TAGS: { value: ColorTag; bg: string }[] = [
   { value: "red", bg: "bg-red-500" },
   { value: "orange", bg: "bg-orange-500" },
@@ -42,6 +42,14 @@ function HabitModal({
   const [frequency, setFrequency] = useState<Frequency>(
     initialValues?.frequency ?? "daily",
   );
+  const [hourlyTarget, setHourlyTarget] = useState<number>(
+    initialValues?.hourlyTarget ?? 1,
+  );
+  const [hourlyTargetError, setHourlyTargetError] = useState("");
+  const [reminderTime, setReminderTime] = useState<string>(
+    initialValues?.reminderTime ?? "",
+  );
+  const [notificationsBlocked, setNotificationsBlocked] = useState(false);
   const [nameError, setNameError] = useState("");
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -54,7 +62,7 @@ function HabitModal({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
@@ -63,7 +71,30 @@ function HabitModal({
       return;
     }
     setNameError("");
-    onSubmit({ name: trimmed, category, colorTag, frequency });
+    if (
+      frequency === "hourly" &&
+      (!Number.isInteger(hourlyTarget) || hourlyTarget < 1)
+    ) {
+      setHourlyTargetError("Target must be a whole number ≥ 1");
+      return;
+    }
+    setHourlyTargetError("");
+    if (reminderTime && getPermissionStatus() === "default") {
+      await requestPermission();
+    }
+    if (reminderTime && getPermissionStatus() === "denied") {
+      setNotificationsBlocked(true);
+    } else {
+      setNotificationsBlocked(false);
+    }
+    onSubmit({
+      name: trimmed,
+      category,
+      colorTag,
+      frequency,
+      hourlyTarget: frequency === "hourly" ? hourlyTarget : undefined,
+      reminderTime: reminderTime || undefined,
+    });
   }
 
   return (
@@ -154,15 +185,85 @@ function HabitModal({
             <select
               id="habit-frequency"
               value={frequency}
-              onChange={(e) => setFrequency(e.target.value as Frequency)}
+              onChange={(e) => {
+                const f = e.target.value as Frequency;
+                setFrequency(f);
+                if (f !== "hourly") setHourlyTargetError("");
+              }}
               className="rounded-lg bg-zinc-800 px-3 py-2 text-zinc-100 border border-zinc-700 focus:outline-none focus:border-violet-500"
             >
-              {FREQUENCIES.map((f) => (
-                <option key={f} value={f}>
-                  {f.charAt(0).toUpperCase() + f.slice(1)}
-                </option>
-              ))}
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="hourly">Hourly</option>
+              <option value="monthly">Monthly</option>
             </select>
+          </div>
+
+          {frequency === "hourly" && (
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="hourlyTarget"
+                className="text-sm font-medium text-zinc-300"
+              >
+                Target completions per hour
+              </label>
+              <input
+                id="hourlyTarget"
+                type="number"
+                min={1}
+                step={1}
+                value={hourlyTarget}
+                onChange={(e) =>
+                  setHourlyTarget(Math.floor(Number(e.target.value)))
+                }
+                className="rounded-lg bg-zinc-800 px-3 py-2 text-zinc-100 border border-zinc-700 focus:outline-none focus:border-violet-500"
+              />
+              {hourlyTargetError && (
+                <span className="text-sm text-red-400">
+                  {hourlyTargetError}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1">
+            <label
+              htmlFor="reminderTime"
+              className="text-sm font-medium text-zinc-300"
+            >
+              Reminder
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="reminderTime"
+                type="time"
+                value={reminderTime}
+                onChange={(e) => {
+                  setReminderTime(e.target.value);
+                  if (!e.target.value) setNotificationsBlocked(false);
+                }}
+                className="flex-1 rounded-lg bg-zinc-800 px-3 py-2 text-zinc-100 border border-zinc-700 focus:outline-none focus:border-violet-500"
+              />
+              {reminderTime && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReminderTime("");
+                    setNotificationsBlocked(false);
+                  }}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+                  aria-label="No reminder"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {notificationsBlocked && (
+              <p className="text-sm text-amber-400">
+                Notifications are blocked. Enable them in browser settings to
+                receive this reminder.
+              </p>
+            )}
           </div>
 
           <div className="flex gap-3 justify-end pt-2">
