@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { Habit, StreakData } from "../types";
 import StreakBadge from "./StreakBadge";
@@ -52,14 +52,21 @@ function HabitCard({
     longest: longestStreak(dates, habit.createdAt, today),
   };
 
-  const [hourlyCount, setHourlyCount] = useState(() =>
-    habit.frequency === "hourly" ? countForDay(habit.id, today) : 0,
-  );
-  const [monthlyCount, setMonthlyCount] = useState(() =>
-    habit.frequency === "monthly"
-      ? countForMonth(habit.id, now.getFullYear(), now.getMonth() + 1)
-      : 0,
-  );
+  const [hourlyCount, setHourlyCount] = useState(0);
+  const [monthlyCount, setMonthlyCount] = useState(0);
+
+  useEffect(() => {
+    if (habit.frequency === "hourly") {
+      countForDay(habit.id, today)
+        .then(setHourlyCount)
+        .catch(() => undefined);
+    } else if (habit.frequency === "monthly") {
+      countForMonth(habit.id, now.getFullYear(), now.getMonth() + 1)
+        .then(setMonthlyCount)
+        .catch(() => undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [habit.id, habit.frequency, today]);
 
   const monthDays = daysInMonth(now.getFullYear(), now.getMonth() + 1);
   const hourlyTarget = (habit.hourlyTarget ?? 1) * 24;
@@ -67,23 +74,31 @@ function HabitCard({
     !!habit.reminderTime && getPermissionStatus() === "denied";
 
   function handleAddHourly() {
-    addCompletion(habit.id, new Date().toISOString().slice(0, 16));
     setHourlyCount((c) => c + 1);
+    addCompletion(habit.id, new Date().toISOString().slice(0, 16)).catch(() => {
+      setHourlyCount((c) => c - 1);
+    });
   }
 
   function handleRemoveHourly() {
-    removeLastCompletion(habit.id, today);
     setHourlyCount((c) => Math.max(0, c - 1));
+    removeLastCompletion(habit.id, today).catch(() => {
+      setHourlyCount((c) => c + 1);
+    });
   }
 
   function handleAddMonthly() {
-    addCompletion(habit.id, today);
     setMonthlyCount((c) => c + 1);
+    addCompletion(habit.id, today).catch(() => {
+      setMonthlyCount((c) => c - 1);
+    });
   }
 
   function handleRemoveMonthly() {
-    removeLastCompletion(habit.id, today);
     setMonthlyCount((c) => Math.max(0, c - 1));
+    removeLastCompletion(habit.id, today).catch(() => {
+      setMonthlyCount((c) => c + 1);
+    });
   }
 
   return (

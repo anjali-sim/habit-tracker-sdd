@@ -5,19 +5,18 @@ import * as habitController from "./habit.controller";
 const router = Router();
 
 const habitSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().optional(),
+  name: z.string().min(1),
   category: z.enum([
-    "health",
-    "fitness",
-    "learning",
-    "productivity",
-    "mindfulness",
-    "other",
+    "Health",
+    "Fitness",
+    "Learning",
+    "Mindfulness",
+    "Work",
+    "Personal",
   ]),
   colorTag: z.enum(["red", "orange", "yellow", "green", "blue", "purple"]),
   frequency: z.enum(["daily", "weekly", "hourly", "monthly"]),
-  reminder: z
+  reminderTime: z
     .string()
     .regex(/^\d{2}:\d{2}$/)
     .optional(),

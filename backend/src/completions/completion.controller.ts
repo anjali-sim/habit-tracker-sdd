@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import * as completionService from "./completion.service";
 
+// Helper: format a Mongoose Date field as 'YYYY-MM-DD'
+const toDateStr = (d: unknown): string =>
+  (d instanceof Date ? d : new Date(d as string)).toISOString().slice(0, 10);
+
 export const getAllCompletions = async (
   _req: Request,
   res: Response,
@@ -8,7 +12,14 @@ export const getAllCompletions = async (
 ) => {
   try {
     const completions = await completionService.getAllCompletions();
-    res.json(completions);
+    const record: Record<string, string[]> = {};
+    for (const c of completions) {
+      const habitIdStr = c.habitId.toString();
+      const dateStr = toDateStr(c.date);
+      if (!record[habitIdStr]) record[habitIdStr] = [];
+      for (let i = 0; i < c.count; i++) record[habitIdStr].push(dateStr);
+    }
+    res.json(record);
   } catch (err) {
     next(err);
   }
@@ -23,7 +34,10 @@ export const getCompletionsByHabit = async (
     const completions = await completionService.getCompletionsByHabit(
       String(req.params.habitId),
     );
-    res.json(completions);
+    const dates = completions.flatMap((c) =>
+      Array<string>(c.count).fill(toDateStr(c.date)),
+    );
+    res.json(dates);
   } catch (err) {
     next(err);
   }
@@ -37,8 +51,9 @@ export const checkToday = async (
   try {
     const result = await completionService.checkToday(
       String(req.params.habitId),
+      req.query.date as string | undefined,
     );
-    res.json(result);
+    res.json({ completed: result.done });
   } catch (err) {
     next(err);
   }
@@ -50,10 +65,11 @@ export const markComplete = async (
   next: NextFunction,
 ) => {
   try {
-    const completion = await completionService.markComplete(
+    await completionService.markComplete(
       String(req.params.habitId),
+      req.body.date as string | undefined,
     );
-    res.json(completion);
+    res.json({ success: true });
   } catch (err) {
     next(err);
   }
@@ -65,8 +81,11 @@ export const markIncomplete = async (
   next: NextFunction,
 ) => {
   try {
-    await completionService.markIncomplete(String(req.params.habitId));
-    res.json({ message: "Marked incomplete" });
+    await completionService.markIncomplete(
+      String(req.params.habitId),
+      req.body.date as string | undefined,
+    );
+    res.json({ success: true });
   } catch (err) {
     next(err);
   }

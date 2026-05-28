@@ -1,3 +1,5 @@
+import { api } from "./apiClient";
+
 const KEY = "hf_theme";
 
 export function getTheme(): "dark" | "light" {
@@ -19,4 +21,6 @@ export function setTheme(theme: "dark" | "light"): void {
   } catch {
     // DOM update failure is non-fatal
   }
+  // Sync to backend in background — UI must not block on this
+  api.put("/api/preferences/theme", { theme }).catch(() => undefined);
 }

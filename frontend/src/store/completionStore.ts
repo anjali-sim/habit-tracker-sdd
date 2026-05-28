@@ -6,7 +6,7 @@ interface CompletionState {
   completions: CompletionRecord;
   isLoading: boolean;
   error: string | null;
-  loadCompletions: () => void;
+  loadCompletions: () => Promise<void>;
   toggleComplete: (habitId: string, date: string) => void;
   clearError: () => void;
 }
@@ -16,10 +16,10 @@ export const useCompletionStore = create<CompletionState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  loadCompletions() {
+  async loadCompletions() {
     set({ isLoading: true, error: null });
     try {
-      const completions = completionService.getAll();
+      const completions = await completionService.getAll();
       set({ completions, isLoading: false });
     } catch {
       set({ isLoading: false, error: "Failed to load completions" });
@@ -33,16 +33,14 @@ export const useCompletionStore = create<CompletionState>((set, get) => ({
     const nextDates = isNowComplete
       ? [...dates, date].sort()
       : dates.filter((d) => d !== date);
+    // Optimistic update — revert on API failure
     set({ completions: { ...prev, [habitId]: nextDates } });
-    try {
-      if (isNowComplete) {
-        completionService.markComplete(habitId, date);
-      } else {
-        completionService.markIncomplete(habitId, date);
-      }
-    } catch {
+    const apiCall = isNowComplete
+      ? completionService.markComplete(habitId, date)
+      : completionService.markIncomplete(habitId, date);
+    apiCall.catch(() => {
       set({ completions: prev, error: "Failed to save completion" });
-    }
+    });
   },
 
   clearError() {

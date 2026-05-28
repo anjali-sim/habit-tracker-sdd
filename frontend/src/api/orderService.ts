@@ -1,37 +1,18 @@
-const KEY = "hf_order";
+import { api } from "./apiClient";
 
-function read(): string[] {
-  try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
+export async function getOrder(): Promise<string[]> {
+  const { order } = await api.get<{ order: string[] }>("/api/order");
+  return order;
 }
 
-function write(order: string[]): void {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(order));
-  } catch {
-    throw new Error("Failed to save habit order");
-  }
+export async function setOrder(ids: string[]): Promise<void> {
+  await api.put("/api/order", { order: ids });
 }
 
-export function getOrder(): string[] {
-  return read();
+export function append(habitId: string): Promise<void> {
+  return api.post(`/api/order/append/${habitId}`);
 }
 
-export function setOrder(ids: string[]): void {
-  write(ids);
-}
-
-export function append(habitId: string): void {
-  const order = read();
-  if (!order.includes(habitId)) {
-    write([...order, habitId]);
-  }
-}
-
-export function remove(habitId: string): void {
-  write(read().filter((id) => id !== habitId));
+export function remove(habitId: string): Promise<void> {
+  return api.delete(`/api/order/${habitId}`);
 }

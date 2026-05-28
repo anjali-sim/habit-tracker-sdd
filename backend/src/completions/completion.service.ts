@@ -15,11 +15,11 @@ export const getAllCompletions = () => Completion.find();
 export const getCompletionsByHabit = (habitId: string) =>
   Completion.find({ habitId: new Types.ObjectId(habitId) });
 
-export const checkToday = async (habitId: string) => {
+export const checkToday = async (habitId: string, dateStr?: string) => {
   const habit = await Habit.findById(habitId);
   if (!habit) return { done: false };
 
-  const today = todayUTC();
+  const today = dateStr ? toUTCMidnight(new Date(dateStr)) : todayUTC();
   const tomorrow = new Date(today);
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
@@ -36,32 +36,32 @@ export const checkToday = async (habitId: string) => {
   return { done: total >= 1 };
 };
 
-export const markComplete = async (habitId: string) => {
-  const today = todayUTC();
-  const tomorrow = new Date(today);
+export const markComplete = async (habitId: string, dateStr?: string) => {
+  const day = dateStr ? toUTCMidnight(new Date(dateStr)) : todayUTC();
+  const tomorrow = new Date(day);
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
   const existing = await Completion.findOne({
     habitId: new Types.ObjectId(habitId),
-    date: { $gte: today, $lt: tomorrow },
+    date: { $gte: day, $lt: tomorrow },
   });
 
   if (existing) return existing;
   return Completion.create({
     habitId: new Types.ObjectId(habitId),
-    date: today,
+    date: day,
     count: 1,
   });
 };
 
-export const markIncomplete = async (habitId: string) => {
-  const today = todayUTC();
-  const tomorrow = new Date(today);
+export const markIncomplete = async (habitId: string, dateStr?: string) => {
+  const day = dateStr ? toUTCMidnight(new Date(dateStr)) : todayUTC();
+  const tomorrow = new Date(day);
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
   await Completion.deleteMany({
     habitId: new Types.ObjectId(habitId),
-    date: { $gte: today, $lt: tomorrow },
+    date: { $gte: day, $lt: tomorrow },
   });
 };
 

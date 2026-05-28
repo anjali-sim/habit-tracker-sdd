@@ -2,18 +2,17 @@ import { Schema, model } from "mongoose";
 
 const habitSchema = new Schema(
   {
-    title: { type: String, required: true },
-    description: { type: String },
+    name: { type: String, required: true },
     category: {
       type: String,
       required: true,
       enum: [
-        "health",
-        "fitness",
-        "learning",
-        "productivity",
-        "mindfulness",
-        "other",
+        "Health",
+        "Fitness",
+        "Learning",
+        "Mindfulness",
+        "Work",
+        "Personal",
       ],
     },
     colorTag: {
@@ -26,10 +25,20 @@ const habitSchema = new Schema(
       required: true,
       enum: ["daily", "weekly", "hourly", "monthly"],
     },
-    reminder: { type: String },
+    reminderTime: { type: String },
     hourlyTarget: { type: Number },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (_doc, ret: Record<string, unknown>) => {
+        ret.id = (ret._id as { toString(): string }).toString();
+        delete ret._id;
+        delete ret.__v; // eslint-disable-line @typescript-eslint/no-dynamic-delete
+        return ret;
+      },
+    },
+  },
 );
 
 export const Habit = model("Habit", habitSchema);
